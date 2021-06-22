@@ -72,13 +72,12 @@ def retrieve_submission_ids_json(url: str) -> list: #list: list[Submission]
     """
     r = requests.get(url)
     subs_json = json.loads(r.text)
-    num_rows = int(subs_json['rowCount'])
     submissions = []
-    for i in range(0, num_rows):
+    for ids in subs_json['ids']:
         # Phase 1, retrieve link, id, type of plan
-        plan_link = subs_json['rows'][i]['link']
+        plan_link = ids['link']
         plan_id = plan_link.split("/")[-1].split("?")[0]
-        plan_type = subs_json['rows'][i]['type']
+        plan_type = ids['type']
         # Phase 2, fill submission with phase 1 + the ditrictr plan(assignment)
         submissions.append(
                 Submission(link=plan_link, plan_type=plan_type,
