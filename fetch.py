@@ -9,6 +9,7 @@ import csv
 import io
 import pydantic
 from pydantic import BaseModel
+from datetime import datetime as dt
 from typing import Tuple
 
 class Submission(pydantic.BaseModel):
@@ -22,7 +23,7 @@ class Submission(pydantic.BaseModel):
     id: str
 
 def submissions(ids_url: str, plans_url: str, cois_url: str,
-                wr_url: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+               wr_url: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Takes in endpoint for all districtr ids in a portal along with csv api  ...
     calls for plans, cois, and written submissions, and retrieves filled pd ...
@@ -34,26 +35,38 @@ def submissions(ids_url: str, plans_url: str, cois_url: str,
                                                     if sub.plan_type == "plan"]
     coi_submissions = [sub.districtr_plan for sub in submissions #filters cois
                                                     if sub.plan_type == "coi"]
-    plan_submissions_df = csv_read(plans_url) # gathers plan metadata in df
-    coi_submissions_df = csv_read(cois_url) # gathers coi metadata in df
-    written_submissions_df = csv_read(wr_url) # gathers written metadata in df
-    assert len(plan_submissions) == len(plan_submissions_df)
-    assert len(coi_submissions) == len(coi_submissions_df)
+    plans_df = csv_read(plans_url) # gathers plan metadata in df
+    cois_df = csv_read(cois_url) # gathers coi metadata in df
+    written_df = csv_read(wr_url) # gathers written metadata in df
+    assert len(plan_submissions) == len(plans_df)
+    assert len(coi_submissions) == len(cois_df)
     # parse for plan id and add in submission dfs
-    plan_submissions_df['plan_id'] = plan_submissions_df["link"].map(
+    plans_df['plan_id'] = plans_df["link"].map(
                                 lambda link: link.split("/")[-1].split("?")[0])
-    coi_submissions_df['plan_id'] = coi_submissions_df["link"].map(
+    cois_df['plan_id'] = cois_df["link"].map(
                                 lambda link: link.split("/")[-1].split("?")[0])
     # sort dfs by plan id to correctly join w/ json information
-    plan_submissions_df = plan_submissions_df.sort_values(
-                                                by=['plan_id'], ascending=True)
-    coi_submissions_df = coi_submissions_df.sort_values(
-                                                by=['plan_id'], ascending=True)
+    plans_df = plans_df.sort_values(by=['plan_id'], ascending=True)
+    cois_df = cois_df.sort_values(by=['plan_id'], ascending=True)
     # join in districtr json assignments into 'districtr_data column'
-    plan_submissions_df['districtr_data'] = plan_submissions
-    coi_submissions_df['districtr_data'] = coi_submissions
+    plans_df['districtr_data'] = plan_submissions
+    cois_df['districtr_data'] = coi_submissions
+    # make datetime fields parseable:
+    plans_df['datetime'] = plans_df['datetime'].map( lambda datetime: (
+        datetime.split("+")[0] + " +" + datetime.split("+")[1].split(" ")[0]))
+    cois_df['datetime'] = cois_df['datetime'].map( lambda datetime: (
+        datetime.split("+")[0] + " +" + datetime.split("+")[1].split(" ")[0]))
+    written_df['datetime'] = written_df['datetime'].map( lambda datetime: (
+        datetime.split("+")[0] + " +" + datetime.split("+")[1].split(" ")[0]))
+    # # convert datetime fields from str's to datetime objects in all dataframe
+    plans_df['datetime'] = plans_df['datetime'].map(lambda datetime: (
+                                dt.strptime(datetime, '%a %b %d %Y %X %Z %z')))
+    cois_df['datetime'] = cois_df['datetime'].map(lambda datetime: (
+                                dt.strptime(datetime, '%a %b %d %Y %X %Z %z')))
+    written_df['datetime'] = written_df['datetime'].map(lambda datetime: (
+                                dt.strptime(datetime, '%a %b %d %Y %X %Z %z')))
     # return relevant dataframes
-    return plan_submissions_df, coi_submissions_df, written_submissions_df
+    return plans_df, cois_df, written_df
 
 def plan_read(plan_id: int) -> dict: #(dict: json obj)#
     """
