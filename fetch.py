@@ -1,6 +1,6 @@
 # more imports than we need
-import geopandas as gpd
-import maup
+# import geopandas as gpd
+# import maup
 import pandas as pd
 import matplotlib.pyplot as plt
 import requests
@@ -83,7 +83,9 @@ def retrieve_submission_ids_json(url: str) -> list: #list: list[Submission]
     retrieveSubmissionJson takes a url (an endpoint to a given state's...
     submission portal), returns a list of filled Submission objects
     """
-    r = requests.get(url)
+    # TODO: temp fix for the purposes of user-agent api call barrier
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'}  
+    r = requests.get(url, headers=headers)
     subs_json = json.loads(r.text)
     submissions = []
     for ids in subs_json['ids']:
