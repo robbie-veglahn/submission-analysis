@@ -9,6 +9,7 @@ import numpy as np
 import pydantic
 from pydantic import BaseModel
 from datetime import datetime as dt
+from datetime import timedelta
 from typing import Tuple
 import fetch
 
@@ -78,6 +79,8 @@ def summary_table(dates: list, plans_df: pd.DataFrame, cois_df: pd.DataFrame,
     summary_df = summary_df.rename(index = lambda x: "Week " + str(int(x) + 1))
     return summary_df
 
+
+
 ###########################################
 #             Helper Functions            #
 ###########################################
@@ -94,6 +97,11 @@ def dfs_in_date_range(dates: list, df: pd.DataFrame) -> list:
     for date in dates:
         start_date = date[0]
         end_date = date[1]
+        # increase end_date by one day to keep mask consistent w/ the way the..
+        # portal queries by date
+        end_date = dt.strptime(end_date, '%Y-%m-%d')
+        end_date += timedelta(days=1)
+        end_date = end_date.strftime('%Y-%m-%d')
         mask = (df['datetime'] > start_date) & (df['datetime'] <= end_date)
         masked_df = df.loc[mask]
         dfs.append(masked_df)
