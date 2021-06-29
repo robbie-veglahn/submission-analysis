@@ -13,6 +13,20 @@ from datetime import timedelta
 from typing import Tuple
 import fetch
 
+def all_submissions_df(state: str # (str: "ohio" or "michigan", i.e.)
+                          ) -> pd.DataFrame:
+    """ 
+    Takes in the desired state portal as a string and retrieves filled pd ...
+    dataframe of all portal submissions with metadata and districtr assignment
+    Note: wrapper function of fetch.py function for user-facing utils.py
+    """
+    ids_url, plans_url, cois_url, written_url, subs = submission_endpts(state)
+    plans_df, cois_df, written_df = fetch.submissions(
+                                     ids_url, plans_url, cois_url, written_url)
+    dfs = [plans_df, cois_df, written_df]
+    all_submissions = pd.concat(dfs, ignore_index=True)
+    return all_submissions
+
 def submission_dfs(state: str # (str: "ohio" or "michigan", i.e.)
                           ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """ 
@@ -20,14 +34,22 @@ def submission_dfs(state: str # (str: "ohio" or "michigan", i.e.)
     dataframes for each submission type with metadata and districtr assignments
     Note: wrapper function of fetch.py function for user-facing utils.py
     """
-    ids_url, plans_url, cois_url, written_url = submission_endpts(state)
+    ids_url, plans_url, cois_url, written_url, subs = submission_endpts(state)
     plans_df, cois_df, written_df = fetch.submissions(
                                      ids_url, plans_url, cois_url, written_url)
     return plans_df, cois_df, written_df
 
-def submission_endpts(state: str) -> Tuple[str, str, str, str]:
+def all_submissions_endpts(state: str) -> Tuple[str, str]:
     """
-    Takes in the desired state portal and returns all 4 relevant api endpts
+    Takes in the desired state portal and returns the endpoints for all plan...
+    ids in a portal, and an endpiont for the csv for all submissions in portal
+    """
+    ids_url, plans, cois, written, all_subs_url = submission_endpts(state)
+    return ids_url, all_subs_url
+
+def submission_endpts(state: str) -> Tuple[str, str, str, str, str]:
+    """
+    Takes in the desired state portal and returns all 5 relevant api endpts
     """
     state = state.lower()
     if state == "michigan":
@@ -36,10 +58,41 @@ def submission_endpts(state: str) -> Tuple[str, str, str, str]:
     else:
         ids_url = "https://k61e3cz2ni.execute-api.us-east-2.amazonaws.com/prod/submissions/districtr-ids/%s" % state
         csv_url = "https://k61e3cz2ni.execute-api.us-east-2.amazonaws.com/prod/submissions/csv/%s" % state
+    # endpoint for csv of all plan submissions
     plans_url   = csv_url + "?type=plan&length=10000"
+    # endpoint for csv of all coi submissions
     cois_url    = csv_url + "?type=coi&length=10000"
+    # endpoint for csv of all written submissions
     written_url = csv_url + "?type=written&length=10000"
-    return ids_url, plans_url, cois_url, written_url
+    # endpoint for csv of all submissions
+    all_subs_url = csv_url + "?length=10000"
+    return ids_url, plans_url, cois_url, written_url, all_subs_url
+
+def submissions_in_range(date_range: Tuple[str, str],
+                                                  state: str) -> pd.DataFrame:
+    """
+    Takes in a date range (Tuple) and a state name and returns a DataFrame ...
+    with all submissions in that given state range
+    Ex date range: ('2021-5-01', '2021-5-07'), in form (start_date, end_date)
+    """
+    submissions_df = all_submissions_df(state)
+    range_dfs = dfs_in_date_range([date_range], submissions_df)
+    range_df = range_dfs[0]
+    return range_df
+
+def summary_table_wrapper(dates: list, state: str) -> pd.DataFrame:
+    """
+    Takes in a list of date ranges and a state name, and returns a generated...
+    summary table as a pd DataFrame.
+    Example 2w dates: [('2021-5-01', '2021-5-07'), ('2021-5-08', '2021-5-14')]
+    """
+    plans_df, cois_df, written_df = submission_dfs(state)
+    summary_df = summary_table(dates, plans_df, cois_df, written_df)
+    return summary_df
+
+###########################################
+#             Helper Functions            #
+###########################################
 
 def summary_table(dates: list, plans_df: pd.DataFrame, cois_df: pd.DataFrame,  
                   written_df: pd.DataFrame) -> pd.DataFrame:
@@ -78,12 +131,6 @@ def summary_table(dates: list, plans_df: pd.DataFrame, cois_df: pd.DataFrame,
         summary_df = pd.concat([summary_df, temp_df], ignore_index = True)
     summary_df = summary_df.rename(index = lambda x: "Week " + str(int(x) + 1))
     return summary_df
-
-
-
-###########################################
-#             Helper Functions            #
-###########################################
 
 def dfs_in_date_range(dates: list, df: pd.DataFrame) -> list: 
     """
