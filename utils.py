@@ -13,12 +13,14 @@ from datetime import timedelta
 from typing import Tuple
 import fetch
 
-def all_submissions_df(state: str # (str: "ohio" or "michigan", i.e.)
-                          ) -> pd.DataFrame:
+def all_submissions_df(state: str) -> pd.DataFrame:
     """ 
     Takes in the desired state portal as a string and retrieves filled pd ...
     dataframe of all portal submissions with metadata and districtr assignment
     Note: wrapper function of fetch.py function for user-facing utils.py
+    To use:
+    >>> submissions_df = all_submissions_df("ohio")
+    >>> submissions_df = all_submissions_df("michigan")
     """
     ids_url, plans_url, cois_url, written_url, subs = submission_endpts(state)
     plans_df, cois_df, written_df = fetch.submissions(
@@ -27,12 +29,14 @@ def all_submissions_df(state: str # (str: "ohio" or "michigan", i.e.)
     all_submissions = pd.concat(dfs, ignore_index=True)
     return all_submissions
 
-def submission_dfs(state: str # (str: "ohio" or "michigan", i.e.)
-                          ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def submission_dfs(state: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """ 
     Takes in the desired state portal as a string and retrieves filled pd ...
     dataframes for each submission type with metadata and districtr assignments
     Note: wrapper function of fetch.py function for user-facing utils.py
+    To use:
+    >>> plans_df, cois_df, written_df = submission_dfs("ohio")
+    >>> plans_df, cois_df, written_df = submission_dfs("michigan")
     """
     ids_url, plans_url, cois_url, written_url, subs = submission_endpts(state)
     plans_df, cois_df, written_df = fetch.submissions(
