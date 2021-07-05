@@ -13,6 +13,30 @@ from datetime import timedelta
 from typing import Tuple
 import fetch
 
+def all_submissions_to_csv(state: str, filename: str) -> None:
+    """
+    Takes in the state to retrieve submissions from as a string and a       ...
+    filename to export to, and exports in csv format to <filename>.csv
+    To use:
+    >>> all_submissions_to_csv("Ohio", "ohio_portal_submissions.csv")
+    ^will export all relevant info to ohio_portal_submissions.csv
+    """
+    all_submissions = all_submissions_df(state)
+    # drops districtr_data column before sending to commissions
+    all_submissions = all_submissions.drop(columns=['districtr_data'])
+    all_submissions.to_csv(filename)
+
+def submissions_in_range_to_csv(state: str, filename: str,
+                                          date_range: Tuple[str, str]) -> None:
+    """
+    Takes in a date range (Tuple), a state name, and a filename to export to...
+    and exports all submissions in that given state & range to <filename>.csv
+    Ex date range: ('2021-5-01', '2021-5-07'), in form (start_date, end_date)
+    """
+    range_df = submissions_in_range(date_range, state)
+    range_df = range_df.drop(columns=['districtr_data'])
+    range_df.to_csv(filename)
+
 def all_submissions_df(state: str) -> pd.DataFrame:
     """ 
     Takes in the desired state portal as a string and retrieves filled pd ...
