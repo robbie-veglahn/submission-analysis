@@ -116,7 +116,8 @@ def summary_table_wrapper(dates: list, state: str) -> pd.DataFrame:
     """
     plans_df, cois_df, written_df = submission_dfs(state)
     summary_df = summary_table(dates, plans_df, cois_df, written_df)
-    return summary_df
+    summary_df_total = summary_df.append(summary_df.sum().rename('Total'))
+    return summary_df_total
 
 ###########################################
 #             Helper Functions            #
