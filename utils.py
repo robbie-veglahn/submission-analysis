@@ -248,7 +248,7 @@ def file_other_summary_wrapper(dates: list, state: str) -> str:
     plans = all_submissions_df[all_submissions_df['type'] == "plan"]
     cois = all_submissions_df[all_submissions_df['type'] == "coi"]
     written = all_submissions_df[all_submissions_df['type'] == "written"]
-    summary_df = file_other_summary_table(date, files, others, plans, cois, written)
+    summary_df = file_other_summary_table(dates, files, others, plans, cois, written)
     summary_df_total = summary_df.append(summary_df.sum().rename('Total'))
     summary_df_total['WEEK TOTAL'] = (summary_df_total['WRITTEN'] +
         summary_df_total['DISTRICTS'] + summary_df_total['COI MAP'] +
