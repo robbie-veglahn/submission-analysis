@@ -254,17 +254,3 @@ def file_other_summary_wrapper(dates: list, state: str) -> str:
         summary_df_total['DISTRICTS'] + summary_df_total['COI MAP'] +
         summary_df_total['FILE'] + summary_df_total['OTHER'])
     return summary_df_total
-
-    # l_plans = len(plans)
-    # l_cois = len(cois)
-    # l_written = len(written)
-    # l_file = len(file_df)
-    # l_other = len(other_df)
-    # print("###############")
-    # print("# Total Submissions: {}".format(len(ranged)))
-    # print("# Plan Submissions: {}".format(l_plans))
-    # print("# Coi Submissions: {}".format(l_cois))
-    # print("# Written Submissions: {}".format(l_written))
-    # print("# File Submissions: {}".format(l_file))
-    # print("# Other Submissions: {}".format(l_other))
-    # print("###############")
