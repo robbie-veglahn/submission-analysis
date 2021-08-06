@@ -68,6 +68,34 @@ def submissions(ids_url: str, plans_url: str, cois_url: str,
     # return relevant dataframes
     return plans_df, cois_df, written_df
 
+def coi_submissions(ids_url: str, cois_url: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Takes in endpoint for only coi districtr ids in a portal along with csv api ...
+    calls for plans, cois, and written submissions, and retrieves filled pd ...
+    dataframes for each submission type with metadata and districtr assignments
+    """
+    submissions = retrieve_submission_ids_json(ids_url)
+    submissions.sort(key=lambda x: str(x.id)) # sorts submission jsons by id
+    coi_submissions = [sub.districtr_plan for sub in submissions #filters cois
+                                                    if sub.plan_type == "coi"]
+    cois_df = csv_read(cois_url) # gathers coi metadata in df
+    assert len(coi_submissions) == len(cois_df)
+    # parse for plan id and add in submission dfs
+    cois_df['plan_id'] = cois_df["link"].map(
+                                lambda link: link.split("/")[-1].split("?")[0])
+    # sort dfs by plan id to correctly join w/ json information
+    cois_df = cois_df.sort_values(by=['plan_id'], ascending=True)
+    # join in districtr json assignments into 'districtr_data column'
+    cois_df['districtr_data'] = coi_submissions
+    # make datetime fields parseable:
+    cois_df['datetime'] = cois_df['datetime'].map( lambda datetime: (
+        datetime.split("+")[0] + " +" + datetime.split("+")[1].split(" ")[0]))
+    # # convert datetime fields from str's to datetime objects in all dataframe
+    cois_df['datetime'] = cois_df['datetime'].map(lambda datetime: (
+                                dt.strptime(datetime, '%a %b %d %Y %X %Z %z')))
+    # return relevant dataframes
+    return cois_df
+
 def plan_read(plan_id: int) -> dict: #(dict: json obj)#
     """
     takes in plan_id string, makes api call w/ plan_id to the planRead funct...
@@ -98,6 +126,8 @@ def retrieve_submission_ids_json(url: str) -> list: #list: list[Submission]
                 Submission(link=plan_link, plan_type=plan_type,
                            id=plan_id, districtr_plan=plan_read(plan_id)))
     return submissions
+
+# MAY1 to Augest 1
 
 def csv_read(url: str) -> pd.DataFrame:
     """
